@@ -15,127 +15,38 @@ pressure = [];
 magneticField = [];
 quat = [];
 
+uno = arduinoUno('/dev/cu.usbmodem1414201',9600); % Create serial port object for the Uno
 
-
-
-
-
-% Set up the serial port
-
-uno = arduinoUno('/dev/cu.usbmodem1414201',9600);
-
-try
-    % Open the serial port
-    fopen(uno);
-
-    % Read and display data from the Arduino
-    disp('Reading IMU data from Arduino...');
+fopen(uno); % Open the serial port
     
-    while true
-        % Read a line from the serial port
-        data = fgetl(uno);
-
-        if (data(11) == 'G')
-
-            [angularVelocity.x,angularVelocity.y,angularVelocity.z] = extractDataValues(data);
-            disp('Angular Velocity:');
-            disp(angularVelocity);
-
-        elseif (data(11) == 'A')
-
-            [acceleration.x,acceleration.y,acceleration.z] = extractDataValues(data);
-            disp('Acceleration:');
-            disp(acceleration);
-
-        elseif (data(11) == 'T')
-
-          tempurature = extractDataValues(data);
-          disp('Tempurature:');
-          disp(((9/5) * (tempurature + 32)));
-
-        elseif (data(11) == 'L')
-
-            [linearVelocity.x,linearVelocity.y,linearVelocity.z] = extractDataValues(data);
-            disp('Linear Velocity:');
-            disp(linearVelocity);
-
-        elseif (data(11) == 'O')
-
-            [orientation.x,orientation.y,orientation.z] = extractDataValues(data);
-            disp('Orientation:');
-            disp(orientation);
+while true
         
-        elseif (data(11) == 'P')
+    data = fgetl(uno); % Read a line from the serial port
 
-           pressure = extractDataValues(data);
-           disp('Pressure:');
-           disp(pressure * 0.00986923);
-          
-        elseif (data(11) == 'M')
+    if ~isempty(data)
 
-            [magneticField.x,magneticField.y,magneticField.z] = extractDataValues(data);
-            disp('Magnetic Field:');
-            disp(magneticField);
-          
-        elseif (data(11) == 'Q')
+        [acceleration,gyro,mag,orrientation,quat,temp,pressure] = getData(data);
 
-            [quat.x,quat.y,quat.z,quat.w] = extractDataValues2(data);
-            disp('Quaternion:');
-            disp(quat);
-
-        end
-
-        disp('Acceleration:');
-
-
-            disp(acceleration);
-
-
-        disp('Tempurature:');
-
-            disp(((9/5) * (tempurature + 32)));
-
-        disp('Linear Velocity:');
-
-            disp(linearVelocity);
-
-        
-        disp('Orientation:');
-
-
-            disp(orientation);
-        
-        disp('Pressure:');
-
-            disp(pressure * 0.00986923);
-
-
-        disp('Magnetic Field:');
-
-            
-            disp(magneticField);
-
-
-        disp('Quaternion:');
-            
-            disp(quat);
-
-        % Check if the data contains IMU information
-        % Display the IMU data in the MATLAB command window
-        % Add a delay if needed to avoid overwhelming the serial port
-        clear data;
     end
 
-catch ME
-    % Handle any errors that may occur
-    disp(ME.message);
-end
+    disp('Acceleration:');
+    disp(acceleration);
+    disp('Tempurature:');
+    disp(((9/5) * (temp + 32)));
+    disp('Orientation:');
+    disp(orrientation);
+    disp('Pressure:');
+    disp(pressure * 0.00986923);
+    disp('Magnetic Field:');
+    disp(mag);
+    disp('Gyro:');
+    disp(gyro);
+    disp('Quaternion:');
+    disp(quat);
 
-% Close the serial port when done
-fclose(uno);
-delete(uno);
-clear uno;
-disp('Serial port closed.');
+    %sim('Artificial_Horizon_2022.slx', 0.01);
+
+end
 
 function serialObject = arduinoUno(port,baud)
 
@@ -143,58 +54,52 @@ function serialObject = arduinoUno(port,baud)
 
 end
 
-function [xVal,yVal,zVal] = extractDataValues(data)
+function [acceleration1,gyro1,mag1,orrientation1,quat1,temp,pressure] = getData(data)
 
-    dataArray = strsplit(data, '=');
+    dataArray = strsplit(data, '|');
 
-    dataX = char(dataArray(2));
-    dataY = char(dataArray(3));
-    dataZ = char(dataArray(4));
+    quat = dataArray(1);
+    quat = strsplit(char(string(quat(1))), ':');
+    quat = strsplit(char(string(quat(3))), ',');
+    quat1.x = double(string(char(quat(1)))); 
+    quat1.y = double(string(char(quat(2)))); 
+    quat1.z = double(string(char(quat(3)))); 
+    quat1.w = double(string(char(quat(4))));
 
-    dataXsplit = strsplit(dataX, ' ');
-    dataYsplit = strsplit(dataY, ' ');
-    dataZsplit = strsplit(dataZ, ' ');
+    acceleration = dataArray(2);
+    acceleration = strsplit(char(string(acceleration(1))), ':');
+    acceleration = strsplit(char(string(acceleration(2))), ',');
+    acceleration1.x = double(string(char(acceleration(1)))); 
+    acceleration1.y = double(string(char(acceleration(2)))); 
+    acceleration1.z = double(string(char(acceleration(3)))); 
 
-    dataZsplit2 = strsplit(char(dataZsplit(1)), '.');
-    dataZsplit3 = [char(string(dataZsplit2(1))),'.',char(string(dataZsplit2(2)))];
+    mag = dataArray(3);
+    mag = strsplit(char(string(mag(1))), ':');
+    mag = strsplit(char(string(mag(2))), ',');
+    mag1.x = double(string(char(mag(1)))); 
+    mag1.y = double(string(char(mag(2)))); 
+    mag1.z = double(string(char(mag(3)))); 
 
-    dataZsplit4 = strsplit((dataZsplit3), '¿');
+    gyro = dataArray(4);
+    gyro = strsplit(char(string(gyro(1))), ':');
+    gyro = strsplit(char(string(gyro(2))), ',');
+    gyro1.x = double(string(char(gyro(1)))); 
+    gyro1.y = double(string(char(gyro(2)))); 
+    gyro1.z = double(string(char(gyro(3)))); 
 
-    dataZsplit5 = strsplit(char(string(dataZsplit4(1))), ' ');
-    dataZsplit6 = strsplit(char(string(dataZsplit5(1))), '');
-    dataZsplit7 = strsplit(char(string(dataZsplit6(1))), 'z');
+    orrientation = dataArray(5);
+    orrientation = strsplit(char(string(orrientation(1))), ':');
+    orrientation = strsplit(char(string(orrientation(2))), ',');
+    orrientation1.x = double(string(char(orrientation(1)))); 
+    orrientation1.y = double(string(char(orrientation(2)))); 
+    orrientation1.z = double(string(char(orrientation(3)))); 
 
-    xVal = double(string(char(dataXsplit(1))));
-    yVal = double(string(char(dataYsplit(1))));
-    zVal = round(double(string(dataZsplit7(1))),2);
+    temp = dataArray(6);
+    temp = strsplit(char(string(temp(1))), ':');
+    temp = double(string(char(temp(2))));
 
-end
-
-function [xVal,yVal,zVal,wVal] = extractDataValues2(data)
-
-    dataArray = strsplit(data, '=');
-
-    dataX = char(dataArray(2));
-    dataY = char(dataArray(3));
-    dataZ = char(dataArray(4));
-    dataW = char(dataArray(5));
-
-    dataXsplit = strsplit(dataX, ' ');
-    dataYsplit = strsplit(dataY, ' ');
-    dataZsplit = strsplit(dataZ, ' ');
-    dataWsplit = strsplit(dataW, ' ');
-
-    dataWsplit2 = strsplit(char(dataWsplit(1)), '.');
-    dataWsplit3 = [char(string(dataWsplit2(1))),'.',char(string(dataWsplit2(2)))];
-
-    dataWsplit4 = strsplit((dataWsplit3), '¿');
-
-    dataWsplit5 = strsplit(char(string(dataWsplit4(1))), ' ');
-    dataWsplit6 = strsplit(char(string(dataWsplit5(1))), '');
-
-    xVal = double(string(char(dataXsplit(1))));
-    yVal = double(string(char(dataYsplit(1))));
-    zVal = double(string(char(dataZsplit(1))));
-    wVal = round(double(string(dataWsplit6(1))),2);
+    pressure = dataArray(7);
+    pressure = strsplit(char(string(pressure(1))), ':');
+    pressure = double(string(char(pressure(2))));
 
 end
