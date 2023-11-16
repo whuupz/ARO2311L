@@ -6,6 +6,19 @@ clc;
 % Cal Poly Pomona 2023
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+angularVelocity = [];
+acceleration = [];
+tempurature = [];
+linearVelocity = [];
+orientation = [];
+pressure = [];
+magneticField = [];
+quat = [];
+
+
+
+
+
 
 % Set up the serial port
 
@@ -40,7 +53,6 @@ try
           disp('Tempurature:');
           disp(((9/5) * (tempurature + 32)));
 
-          
         elseif (data(11) == 'L')
 
             [linearVelocity.x,linearVelocity.y,linearVelocity.z] = extractDataValues(data);
@@ -70,19 +82,47 @@ try
             [quat.x,quat.y,quat.z,quat.w] = extractDataValues2(data);
             disp('Quaternion:');
             disp(quat);
-            euler = quat2eul(quat);
-            disp('Euler');
-            disp(euler);
 
         end
 
+        disp('Acceleration:');
 
 
+            disp(acceleration);
+
+
+        disp('Tempurature:');
+
+            disp(((9/5) * (tempurature + 32)));
+
+        disp('Linear Velocity:');
+
+            disp(linearVelocity);
+
+        
+        disp('Orientation:');
+
+
+            disp(orientation);
+        
+        disp('Pressure:');
+
+            disp(pressure * 0.00986923);
+
+
+        disp('Magnetic Field:');
+
+            
+            disp(magneticField);
+
+
+        disp('Quaternion:');
+            
+            disp(quat);
 
         % Check if the data contains IMU information
         % Display the IMU data in the MATLAB command window
         % Add a delay if needed to avoid overwhelming the serial port
-        pause(0.01);
         clear data;
     end
 
