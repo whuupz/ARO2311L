@@ -7,13 +7,10 @@
 #include <RH_RF95.h>
 
 Adafruit_MPL115A2 mpl115a2;
-/* Set the delay between fresh samples */
+
 uint16_t BNO055_SAMPLERATE_DELAY_MS = 100;
 
-// Check I2C device address and correct line below (by default address is 0x29 or 0x28)
-//                                   id, address
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire);
-
 
 #define SENSOR1_ADDRESS 0xC0  //pressure sensor address   / to stop 0x12
 #define SENSOR2_ADDRESS 0x28   // to stop 0x40    imu addresses
@@ -22,7 +19,6 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire);
 #define RFM95_INT   3
 #define RFM95_RST   4
 
-// Change to 434.0 or other frequency, must match RX's freq!
 #define RF95_FREQ 915.0
 
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
@@ -47,7 +43,6 @@ void setup() {
   }
   Serial.println("LoRa radio init OK!");
 
-  // Defaults after init are 434.0MHz, modulation GFSK_Rb250Fd250, +13dbM
   if (!rf95.setFrequency(RF95_FREQ)) {
     Serial.println("setFrequency failed");
     while (1);
@@ -85,20 +80,20 @@ void loop() {
 
   imu::Quaternion quat = bno.getQuat();
 
-  //delay(100);
-  //digitalWrite(13, HIGH);
+  delay(50);
+  digitalWrite(13, HIGH);
   float pressureKPA = 0, temperatureC = 0;
   pressureKPA = mpl115a2.getPressure();
   temperatureC = mpl115a2.getTemperature();
-  //digitalWrite(13, LOW);
-  //delay(100);
+  digitalWrite(13, LOW);
+  delay(50);
 
-  char radiopacket[200]; // Adjust the array size accordingly
+  char radiopacket[200];
   sprintf(radiopacket,
         "Q:%.2f,%.2f,%.2f,%.2f|A:%.2f,%.2f,%.2f|M:%.2f,%.2f,%.2f|G:%.2f,%.2f,%.2f|O:%.2f,%.2f,%.2f|T:%.2f|P:%.2f|",
         quat.x(), quat.y(), quat.z(), quat.w(),
-        accelX, accelY, accelZ, // Corrected lines
-        magX, magY, magZ,       // Corrected lines
+        accelX, accelY, accelZ,
+        magX, magY, magZ,
         gyroX, gyroY, gyroZ,
         orientationY, orientationY, orientationZ,
         temperatureC,
@@ -127,13 +122,11 @@ void loop() {
     Serial.println("No reply, is there a listener around?");
   }
   
-
   int8_t boardTemp = bno.getTemp();
   Serial.println();
   Serial.print(F("temperature: "));
   Serial.println(boardTemp);
   
-
   uint8_t system, gyro, accel, mag = 0;
   bno.getCalibration(&system, &gyro, &accel, &mag);
   Serial.println();
